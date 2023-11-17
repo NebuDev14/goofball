@@ -1,70 +1,9 @@
 {
-  "HALProvider": {
-    "Other Devices": {
-      "BuiltInAccel": {
-        "header": {
-          "open": true
-        }
-      },
-      "XRPGyro": {
-        "header": {
-          "open": true
-        }
-      },
-      "motorL": {
-        "header": {
-          "open": true
-        }
-      },
-      "motorR": {
-        "header": {
-          "open": true
-        }
-      },
-      "servo1": {
-        "header": {
-          "open": true
-        }
-      }
-    }
-  },
   "NTProvider": {
     "types": {
       "/FMSInfo": "FMSInfo",
-      "/LiveWindow/Ungrouped/DifferentialDrive[1]": "DifferentialDrive",
-      "/LiveWindow/Ungrouped/DigitalInput[0]": "Digital Input",
-      "/LiveWindow/Ungrouped/DigitalOutput[1]": "Digital Output",
-      "/LiveWindow/Ungrouped/Scheduler": "Scheduler",
       "/SmartDashboard/Field": "Field2d",
       "/SmartDashboard/SendableChooser[0]": "String Chooser"
-    },
-    "windows": {
-      "/SmartDashboard/Field": {
-        "window": {
-          "visible": true
-        }
-      }
-    }
-  },
-  "NetworkTables": {
-    "transitory": {
-      "FMSInfo": {
-        "open": true
-      },
-      "LiveWindow": {
-        "open": true
-      },
-      "Shuffleboard": {
-        ".recording": {
-          "open": true
-        }
-      },
-      "SmartDashboard": {
-        "SendableChooser[0]": {
-          "open": true
-        },
-        "open": true
-      }
     }
   }
 }

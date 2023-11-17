@@ -9,6 +9,8 @@ import com.pathplanner.lib.util.ReplanningConfig;
 import com.pathplanner.lib.commands.FollowPathRamsete;
 import com.pathplanner.lib.path.PathPlannerTrajectory;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
@@ -20,9 +22,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.xrp.XRPGyro;
 import edu.wpi.first.wpilibj.xrp.XRPMotor;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import io.github.oblarg.oblog.annotations.Log;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -81,27 +85,29 @@ public class Drivetrain extends SubsystemBase {
     SmartDashboard.putData(field);
   }
 
+  private void driveVolts(double left, double right) {
+    m_leftMotor.setVoltage(left);
+    m_rightMotor.setVoltage(right);
+  }
+
   public Command tankDrive(DoubleSupplier leftSpeed, DoubleSupplier rightSpeed) {
     return run(() -> m_diffDrive.tankDrive(leftSpeed.getAsDouble(), rightSpeed.getAsDouble(), false));
   }
 
-  // public Command setSpeeds(ChassisSpeeds chassisSpeeds) {
-  // DifferentialDriveWheelSpeeds wheelSpeeds = kinematics.toWheelSpeeds(chassisSpeeds);
+  public Command arcadeDrive(DoubleSupplier xSpeed, DoubleSupplier zRotation) {
+    return run(() -> m_diffDrive.arcadeDrive(xSpeed.getAsDouble(), zRotation.getAsDouble()));
+  }
 
-  //   new ChassisSpeeds()
-  // }
-
-  // public Command follow(PathPlannerTrajectory path) {
-
-  // }
-
-  // public Command followPath(PathPlannerTrajectory path, boolean resetOdometry)
-  // {
-
-  // }
+  public Command followPath(Trajectory trajectory) {
+    return new RamseteCommand(trajectory, this::getPose, new RamseteController(), ff, kinematics, this::getWheelSpeeds, left, right, this::driveVolts, this);
+  }
 
   public Pose2d getPose() {
     return new Pose2d(m_leftEncoder.getDistance(), m_rightEncoder.getDistance(), new Rotation2d(m_gyro.getAngle()));
+  }
+
+  public DifferentialDriveWheelSpeeds getWheelSpeeds() {
+    return new DifferentialDriveWheelSpeeds(m_leftEncoder.getRate(), m_rightEncoder.getRate());
   }
 
   public void resetEncoders() {

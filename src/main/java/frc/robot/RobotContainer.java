@@ -4,9 +4,16 @@
 
 package frc.robot;
 
+import java.util.List;
+
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.commands.ArcadeDrive;
 import frc.robot.commands.AutonomousDistance;
 import frc.robot.commands.AutonomousTime;
@@ -40,6 +47,10 @@ public class RobotContainer {
     configureButtonBindings();
   }
 
+  public Command testTrajectoryAuto() {
+    return m_drivetrain.followPath(TrajectoryGenerator.generateTrajectory(new Pose2d(), List.of(), new Pose2d(2, 2, Rotation2d.fromDegrees(15)), DriveConstants.kConfig));
+  }
+
   private void configureButtonBindings() {
 
     m_drivetrain.setDefaultCommand(m_drivetrain.tankDrive(() -> left.getRawAxis(0), () -> right.getRawAxis(0)));
@@ -48,11 +59,12 @@ public class RobotContainer {
     Trigger userButton = new Trigger(m_onboardIO::getUserButtonPressed);
     userButton
         .onTrue(new PrintCommand("USER Button Pressed"))
-        .onFalse(new PrintCommand("USER Button Released"));    
+        .onFalse(new PrintCommand("USER Button Released"));
 
     // Setup SmartDashboard options
     m_chooser.setDefaultOption("Auto Routine Distance", new AutonomousDistance(m_drivetrain));
     m_chooser.addOption("Auto Routine Time", new AutonomousTime(m_drivetrain));
+    m_chooser.addOption("Test Trajectory", testTrajectoryAuto());
     SmartDashboard.putData(m_chooser);
   }
 
