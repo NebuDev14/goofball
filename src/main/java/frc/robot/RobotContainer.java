@@ -4,22 +4,17 @@
 
 package frc.robot;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.xrp.XRPOnBoardIO;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Constants.DriveConstants;
-import frc.robot.commands.AutonomousDistance;
-import frc.robot.commands.AutonomousTime;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Drivetrain;
-import java.util.List;
 
 public class RobotContainer {
   private final Drivetrain m_drivetrain = new Drivetrain();
@@ -30,6 +25,8 @@ public class RobotContainer {
   private final Joystick right = new Joystick(1);
   private final Joystick buttons = new Joystick(2);
 
+  private final Autos autos = new Autos(m_drivetrain);
+
   // Create SmartDashboard chooser for autonomous routines
   private final SendableChooser<Command> m_chooser = new SendableChooser<>();
 
@@ -39,16 +36,11 @@ public class RobotContainer {
     configureButtonBindings();
   }
 
-  public Command testTrajectoryAuto() {
-    return m_drivetrain.followPath(
-        TrajectoryGenerator.generateTrajectory(
-            new Pose2d(),
-            List.of(),
-            new Pose2d(2, 2, Rotation2d.fromDegrees(15)),
-            DriveConstants.kConfig));
-  }
-
   private void configureButtonBindings() {
+
+    // schedule the auto, as god intended
+    new Trigger(DriverStation::isAutonomous)
+        .whileTrue(Commands.deferredProxy(m_chooser::getSelected));
 
     m_drivetrain.setDefaultCommand(
         m_drivetrain.tankDrive(() -> left.getRawAxis(0), () -> right.getRawAxis(0)));
@@ -60,13 +52,8 @@ public class RobotContainer {
         .onFalse(new PrintCommand("USER Button Released"));
 
     // Setup SmartDashboard options
-    m_chooser.setDefaultOption("Auto Routine Distance", new AutonomousDistance(m_drivetrain));
-    m_chooser.addOption("Auto Routine Time", new AutonomousTime(m_drivetrain));
-    m_chooser.addOption("Test Trajectory", testTrajectoryAuto());
+    m_chooser.setDefaultOption("Back and Forth", autos.backAndForth());
+    m_chooser.addOption("Test Trajectory", autos.testTrajectory());
     SmartDashboard.putData(m_chooser);
-  }
-
-  public Command getAutonomousCommand() {
-    return m_chooser.getSelected();
   }
 }
