@@ -4,16 +4,16 @@
 
 package frc.robot.subsystems;
 
-import java.util.function.DoubleSupplier;
-import com.pathplanner.lib.util.ReplanningConfig;
-import com.pathplanner.lib.commands.FollowPathRamsete;
-import com.pathplanner.lib.path.PathPlannerTrajectory;
-import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
-import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.RamseteController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
@@ -24,19 +24,14 @@ import edu.wpi.first.wpilibj.xrp.XRPMotor;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import io.github.oblarg.oblog.annotations.Log;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.RamseteController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.controller.LTVDifferentialDriveController;
+import java.util.function.DoubleSupplier;
 
 public class Drivetrain extends SubsystemBase {
-  private static final double kGearRatio = (30.0 / 14.0) * (28.0 / 16.0) * (36.0 / 9.0) * (26.0 / 8.0); // 48.75:1
+  private static final double kGearRatio =
+      (30.0 / 14.0) * (28.0 / 16.0) * (36.0 / 9.0) * (26.0 / 8.0); // 48.75:1
   private static final double kCountsPerMotorShaftRev = 12.0;
   private static final double kCountsPerRevolution = kCountsPerMotorShaftRev * kGearRatio; // 585.0
-  private static final double kWheelDiameterInch = 2.3622; // 60 mm
+  private static final double kWheelDiameterMeters = Units.inchesToMeters(2.3622); // 60 mm
   private static final double kTrackWidth = 0;
 
   private final XRPMotor m_leftMotor = new XRPMotor(0);
@@ -52,7 +47,8 @@ public class Drivetrain extends SubsystemBase {
   private final DifferentialDriveOdometry odometry;
 
   // Kinematics
-  private final DifferentialDriveKinematics kinematics = new DifferentialDriveKinematics(kTrackWidth);
+  private final DifferentialDriveKinematics kinematics =
+      new DifferentialDriveKinematics(kTrackWidth);
 
   // Set up the XRPGyro
   private final XRPGyro m_gyro = new XRPGyro();
@@ -74,12 +70,18 @@ public class Drivetrain extends SubsystemBase {
   public Drivetrain() {
     m_rightMotor.setInverted(true);
 
-    odometry = new DifferentialDriveOdometry(new Rotation2d(m_gyro.getAngle()), m_leftEncoder.getDistance(),
-        m_rightEncoder.getDistance(), new Pose2d(0, 0, new Rotation2d()));
+    odometry =
+        new DifferentialDriveOdometry(
+            new Rotation2d(m_gyro.getAngle()),
+            m_leftEncoder.getDistance(),
+            m_rightEncoder.getDistance(),
+            new Pose2d(0, 0, new Rotation2d()));
 
-    // Use inches as unit for encoder distances
-    m_leftEncoder.setDistancePerPulse((Math.PI * kWheelDiameterInch) / kCountsPerRevolution);
-    m_rightEncoder.setDistancePerPulse((Math.PI * kWheelDiameterInch) / kCountsPerRevolution);
+    // Use METERS as unit for encoder distances
+    // I have no clue why the example used inches
+    // That's disgusting
+    m_leftEncoder.setDistancePerPulse((Math.PI * kWheelDiameterMeters) / kCountsPerRevolution);
+    m_rightEncoder.setDistancePerPulse((Math.PI * kWheelDiameterMeters) / kCountsPerRevolution);
     resetEncoders();
 
     SmartDashboard.putData(field);
@@ -91,7 +93,8 @@ public class Drivetrain extends SubsystemBase {
   }
 
   public Command tankDrive(DoubleSupplier leftSpeed, DoubleSupplier rightSpeed) {
-    return run(() -> m_diffDrive.tankDrive(leftSpeed.getAsDouble(), rightSpeed.getAsDouble(), false));
+    return run(
+        () -> m_diffDrive.tankDrive(leftSpeed.getAsDouble(), rightSpeed.getAsDouble(), false));
   }
 
   public Command arcadeDrive(DoubleSupplier xSpeed, DoubleSupplier zRotation) {
@@ -99,11 +102,24 @@ public class Drivetrain extends SubsystemBase {
   }
 
   public Command followPath(Trajectory trajectory) {
-    return new RamseteCommand(trajectory, this::getPose, new RamseteController(), ff, kinematics, this::getWheelSpeeds, left, right, this::driveVolts, this);
+    return new RamseteCommand(
+        trajectory,
+        this::getPose,
+        new RamseteController(),
+        ff,
+        kinematics,
+        this::getWheelSpeeds,
+        left,
+        right,
+        this::driveVolts,
+        this);
   }
 
   public Pose2d getPose() {
-    return new Pose2d(m_leftEncoder.getDistance(), m_rightEncoder.getDistance(), new Rotation2d(m_gyro.getAngle()));
+    return new Pose2d(
+        m_leftEncoder.getDistance(),
+        m_rightEncoder.getDistance(),
+        new Rotation2d(m_gyro.getAngle()));
   }
 
   public DifferentialDriveWheelSpeeds getWheelSpeeds() {
@@ -200,9 +216,10 @@ public class Drivetrain extends SubsystemBase {
 
   @Override
   public void periodic() {
-    odometry.update(new Rotation2d(m_gyro.getAngle()), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
+    odometry.update(
+        new Rotation2d(m_gyro.getAngle()),
+        m_leftEncoder.getDistance(),
+        m_rightEncoder.getDistance());
     field.setRobotPose(getPose());
-
-
   }
 }

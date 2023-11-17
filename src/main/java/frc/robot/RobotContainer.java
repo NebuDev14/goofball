@@ -4,30 +4,22 @@
 
 package frc.robot;
 
-import java.util.List;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.XboxController;
-import frc.robot.Constants.DriveConstants;
-import frc.robot.commands.ArcadeDrive;
-import frc.robot.commands.AutonomousDistance;
-import frc.robot.commands.AutonomousTime;
-import frc.robot.subsystems.Arm;
-import frc.robot.subsystems.Drivetrain;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.xrp.XRPOnBoardIO;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Constants.DriveConstants;
+import frc.robot.commands.AutonomousDistance;
+import frc.robot.commands.AutonomousTime;
+import frc.robot.subsystems.Arm;
+import frc.robot.subsystems.Drivetrain;
+import java.util.List;
 
 public class RobotContainer {
   private final Drivetrain m_drivetrain = new Drivetrain();
@@ -48,12 +40,18 @@ public class RobotContainer {
   }
 
   public Command testTrajectoryAuto() {
-    return m_drivetrain.followPath(TrajectoryGenerator.generateTrajectory(new Pose2d(), List.of(), new Pose2d(2, 2, Rotation2d.fromDegrees(15)), DriveConstants.kConfig));
+    return m_drivetrain.followPath(
+        TrajectoryGenerator.generateTrajectory(
+            new Pose2d(),
+            List.of(),
+            new Pose2d(2, 2, Rotation2d.fromDegrees(15)),
+            DriveConstants.kConfig));
   }
 
   private void configureButtonBindings() {
 
-    m_drivetrain.setDefaultCommand(m_drivetrain.tankDrive(() -> left.getRawAxis(0), () -> right.getRawAxis(0)));
+    m_drivetrain.setDefaultCommand(
+        m_drivetrain.tankDrive(() -> left.getRawAxis(0), () -> right.getRawAxis(0)));
 
     // Example of how to use the onboard IO
     Trigger userButton = new Trigger(m_onboardIO::getUserButtonPressed);
@@ -71,5 +69,4 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     return m_chooser.getSelected();
   }
-
 }
